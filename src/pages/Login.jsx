@@ -1,26 +1,49 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import Input from '../components/ui/Input'
+import logo from '../logo.png'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
   const [mode, setMode] = useState('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '', dateOfBirth: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+
+  function set(field) {
+    return e => setForm(f => ({ ...f, [field]: e.target.value }))
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError(''); setMessage(''); setLoading(true)
     try {
       if (mode === 'login') {
-        const { error } = await signIn(email, password)
+        const { error } = await signIn(form.email, form.password)
         if (error) throw error
       } else {
-        const { error } = await signUp(email, password)
+        if (!form.firstName.trim()) throw new Error('First name is required')
+        if (!form.lastName.trim()) throw new Error('Last name is required')
+
+        const { data, error } = await signUp(form.email, form.password, {
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          dateOfBirth: form.dateOfBirth || null,
+        })
         if (error) throw error
+
+        // Save profile fields into user_settings once row is created
+        if (data?.user) {
+          await supabase.from('user_settings').upsert({
+            user_id: data.user.id,
+            first_name: form.firstName.trim(),
+            last_name: form.lastName.trim(),
+            date_of_birth: form.dateOfBirth || null,
+          })
+        }
+
         setMessage('Check your email to confirm your account.')
       }
     } catch (err) {
@@ -30,15 +53,18 @@ export default function Login() {
     }
   }
 
+  function switchMode() {
+    setMode(m => m === 'login' ? 'signup' : 'login')
+    setError(''); setMessage('')
+  }
+
   return (
     <div className="flex min-h-screen bg-brand-950">
       {/* Left panel — branding (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500">
-            <span className="text-base font-bold text-white">B</span>
-          </div>
-          <span className="text-xl font-bold text-white">BudgetFlow</span>
+        <div className="flex items-center gap-2.5">
+          <img src={logo} alt="Beztami" className="h-10 w-10 rounded-xl object-cover" />
+          <span className="brand-text text-xl">Beztami</span>
         </div>
         <div>
           <h2 className="text-4xl font-bold text-white leading-tight mb-4">
@@ -48,7 +74,7 @@ export default function Login() {
             Track spending, set budgets, and reach your savings goals — all in one place.
           </p>
         </div>
-        <p className="text-brand-500 text-sm">© 2025 BudgetFlow</p>
+        <p className="text-brand-500 text-sm">© 2025 Beztami</p>
       </div>
 
       {/* Right panel — form */}
@@ -56,10 +82,8 @@ export default function Login() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500">
-              <span className="text-xl font-bold text-white">B</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white">BudgetFlow</h1>
+            <img src={logo} alt="Beztami" className="mx-auto mb-3 h-20 w-20 rounded-3xl object-cover shadow-2xl" />
+            <h1 className="brand-text text-3xl">Beztami</h1>
             <p className="mt-1 text-sm text-brand-300">Your personal finance tracker</p>
           </div>
 
@@ -72,20 +96,48 @@ export default function Login() {
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Signup-only fields */}
+              {mode === 'signup' && (
+                <>
+                  <div className="flex gap-3">
+                    <Input
+                      label="First name"
+                      placeholder="John"
+                      value={form.firstName}
+                      onChange={set('firstName')}
+                      required
+                    />
+                    <Input
+                      label="Last name"
+                      placeholder="Doe"
+                      value={form.lastName}
+                      onChange={set('lastName')}
+                      required
+                    />
+                  </div>
+                  <Input
+                    label="Date of birth"
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={set('dateOfBirth')}
+                  />
+                </>
+              )}
+
               <Input
                 label="Email"
                 type="email"
                 placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                value={form.email}
+                onChange={set('email')}
                 required
               />
               <Input
                 label="Password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                value={form.password}
+                onChange={set('password')}
                 required
                 minLength={6}
               />
@@ -115,10 +167,7 @@ export default function Login() {
 
             <p className="mt-5 text-center text-sm text-gray-400">
               {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-              <button
-                onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setMessage('') }}
-                className="font-semibold text-brand-700 hover:underline"
-              >
+              <button onClick={switchMode} className="font-semibold text-brand-700 hover:underline">
                 {mode === 'login' ? 'Sign up' : 'Sign in'}
               </button>
             </p>

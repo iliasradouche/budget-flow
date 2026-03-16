@@ -20,7 +20,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       {/* Toast container */}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4">
+      <div className="fixed bottom-20 left-4 right-4 sm:bottom-auto sm:top-4 sm:left-auto sm:right-4 z-[100] flex flex-col gap-2 sm:max-w-sm w-auto pointer-events-none">
         {toasts.map(t => (
           <div
             key={t.id}
