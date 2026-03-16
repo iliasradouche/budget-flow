@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, ArrowLeftRight, Tag, Target, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import CurrencyPicker from './CurrencyPicker'
 
 const links = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -31,10 +32,7 @@ export default function Sidebar() {
             end={to === '/'}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors
-              ${isActive
-                ? 'bg-brand-700 text-white'
-                : 'text-brand-200 hover:bg-brand-800 hover:text-white'
-              }`
+              ${isActive ? 'bg-brand-700 text-white' : 'text-brand-200 hover:bg-brand-800 hover:text-white'}`
             }
           >
             <Icon size={18} />
@@ -42,6 +40,12 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Currency picker */}
+      <div className="border-t border-brand-800 pt-4 mb-3">
+        <p className="px-1 mb-1.5 text-xs text-brand-500 font-medium">Currency</p>
+        <CurrencyPicker />
+      </div>
 
       {/* User + Sign out */}
       <div className="border-t border-brand-800 pt-4">

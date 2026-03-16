@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useCategories, useAddCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories'
 import { useUpdateRolloverSetting } from '../hooks/useBudgetRollover'
+import { useCurrency } from '../context/CurrencyContext'
 import { categorySchema } from '../lib/validations'
 import Layout from '../components/Layout'
 import Button from '../components/ui/Button'
@@ -61,10 +62,6 @@ function CategoryForm({ defaultValues, onSubmit, loading }) {
   )
 }
 
-function fmt(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
-}
-
 export default function Categories() {
   const [modal, setModal] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
@@ -74,6 +71,7 @@ export default function Categories() {
   const updateCat = useUpdateCategory()
   const deleteCat = useDeleteCategory()
   const updateRollover = useUpdateRolloverSetting()
+  const { fmt } = useCurrency()
 
   const income = categories.filter(c => c.type === 'income')
   const expense = categories.filter(c => c.type === 'expense')

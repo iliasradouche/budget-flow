@@ -4,8 +4,9 @@ import { Plus, Pencil, Trash2, Download, Search, RefreshCw, Pause, Play } from '
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Papa from 'papaparse'
+import { useCurrency } from '../context/CurrencyContext'
 import { useTransactions, useAddTransaction, useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions'
-import { useCategories } from '../hooks/useCategories'
+import { useCategories, useAddCategory } from '../hooks/useCategories'
 import { useRecurringTransactions, useAddRecurring, useDeleteRecurring, useToggleRecurring } from '../hooks/useRecurring'
 import { transactionSchema, recurringSchema } from '../lib/validations'
 import Layout from '../components/Layout'
@@ -13,20 +14,64 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input, { Select } from '../components/ui/Input'
 
-function fmt(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
-}
-
 const INTERVAL_LABELS = { weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }
 
 // ── Transaction Form ─────────────────────────────────────────────────────────
+function QuickAddCategory({ type, onCreated }) {
+  const addCat = useAddCategory()
+  const [name, setName] = useState('')
+  const COLORS = ['#22c55e','#3b82f6','#f97316','#8b5cf6','#ef4444','#06b6d4','#ec4899','#f59e0b']
+  const [color, setColor] = useState('#22c55e')
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!name.trim()) return
+    const cat = await addCat.mutateAsync({ name: name.trim(), type, color, icon: 'tag', budget_limit: '' })
+    onCreated(cat)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-2 rounded-2xl border border-brand-100 bg-brand-50 p-3 flex flex-col gap-2">
+      <p className="text-xs font-semibold text-brand-700">New category</p>
+      <input
+        autoFocus
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Category name..."
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+      />
+      <div className="flex gap-1.5 flex-wrap">
+        {COLORS.map(c => (
+          <button key={c} type="button" onClick={() => setColor(c)}
+            className={`h-6 w-6 rounded-full border-2 transition-all ${color === c ? 'border-gray-700 scale-110' : 'border-transparent'}`}
+            style={{ backgroundColor: c }} />
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" loading={addCat.isPending} className="flex-1 justify-center">
+          Add
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onCreated(null)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
+}
+
 function TransactionForm({ defaultValues, onSubmit, loading }) {
   const { data: categories = [] } = useCategories()
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(transactionSchema),
     defaultValues: defaultValues || { type: 'expense', amount: '', category_id: '', note: '', date: format(new Date(), 'yyyy-MM-dd') },
   })
   const type = watch('type')
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+
+  function handleCategoryCreated(cat) {
+    setShowQuickAdd(false)
+    if (cat) setValue('category_id', cat.id)
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -36,12 +81,25 @@ function TransactionForm({ defaultValues, onSubmit, loading }) {
       </Select>
       <Input label="Amount" type="number" step="0.01" placeholder="0.00"
         error={errors.amount?.message} {...register('amount')} />
-      <Select label="Category" error={errors.category_id?.message} {...register('category_id')}>
-        <option value="">No category</option>
-        {categories.filter(c => c.type === type).map(c => (
-          <option key={c.id} value={c.id}>{c.name}</option>
-        ))}
-      </Select>
+
+      {/* Category with inline quick-add */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm font-medium text-gray-700">Category</label>
+          <button type="button" onClick={() => setShowQuickAdd(v => !v)}
+            className="flex items-center gap-1 text-xs text-brand-600 font-medium hover:text-brand-800 transition-colors">
+            <Plus size={12} /> New category
+          </button>
+        </div>
+        <Select error={errors.category_id?.message} {...register('category_id')}>
+          <option value="">No category</option>
+          {categories.filter(c => c.type === type).map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </Select>
+        {showQuickAdd && <QuickAddCategory type={type} onCreated={handleCategoryCreated} />}
+      </div>
+
       <Input label="Note" placeholder="Optional note..."
         error={errors.note?.message} {...register('note')} />
       <Input label="Date" type="date"
@@ -104,9 +162,9 @@ export default function Transactions() {
   const [deleteId, setDeleteId] = useState(null)
   const [deleteRecurringId, setDeleteRecurringId] = useState(null)
 
+  const { fmt } = useCurrency()
   const { data: transactions = [], isLoading } = useTransactions(filters)
   const { data: recurring = [], isLoading: recurringLoading } = useRecurringTransactions()
-  const { data: categories = [] } = useCategories()
 
   const addTx = useAddTransaction()
   const updateTx = useUpdateTransaction()

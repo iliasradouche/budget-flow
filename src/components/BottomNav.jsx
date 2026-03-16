@@ -10,8 +10,9 @@ const links = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 safe-bottom lg:hidden">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 lg:hidden"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+      <div className="flex items-center justify-around px-2 pt-2 pb-1">
         {links.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}

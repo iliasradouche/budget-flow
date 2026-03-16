@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { Plus, Pencil, Trash2, PlusCircle, CheckCircle2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useCurrency } from '../context/CurrencyContext'
 import { useGoals, useAddGoal, useUpdateGoal, useDeleteGoal, useContributeToGoal } from '../hooks/useGoals'
 import { goalSchema, contributionSchema } from '../lib/validations'
 import Layout from '../components/Layout'
@@ -11,10 +12,6 @@ import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 
 const COLORS = ['#22c55e', '#3b82f6', '#f97316', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f59e0b']
-
-function fmt(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
-}
 
 function GoalForm({ defaultValues, onSubmit, loading }) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -133,6 +130,7 @@ export default function Goals() {
   const [contributeGoal, setContributeGoal] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
+  const { fmt } = useCurrency()
   const { data: goals = [], isLoading } = useGoals()
   const addGoal = useAddGoal()
   const updateGoal = useUpdateGoal()
