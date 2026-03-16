@@ -1,0 +1,21 @@
+# ============================================================
+# BudgetFlow — Ansible Deploy Variables
+# ============================================================
+# DO NOT commit real values here.
+# Pass secrets via environment variables or ansible-vault.
+# ============================================================
+
+# Absolute path to your project root
+project_dir: "{{ lookup('env', 'HOME') }}/Desktop/Budget"
+
+# Vercel token — get from: https://vercel.com/account/tokens
+vercel_token: "{{ lookup('env', 'VERCEL_TOKEN') }}"
+
+# Vercel project & org (found in .vercel/project.json after first deploy)
+# Leave empty on first run — Vercel CLI will create them automatically
+vercel_org_id:     "{{ lookup('env', 'VERCEL_ORG_ID') }}"
+vercel_project_id: "{{ lookup('env', 'VERCEL_PROJECT_ID') }}"
+
+# Supabase credentials — used to set env vars on Vercel
+supabase_url:      "{{ lookup('env', 'VITE_SUPABASE_URL') }}"
+supabase_anon_key: "{{ lookup('env', 'VITE_SUPABASE_ANON_KEY') }}"
