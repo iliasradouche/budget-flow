@@ -5,16 +5,60 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply antialiased bg-brand-950 text-gray-900;
+  /* Lock the document to the screen — no body-level bounce or scroll */
+  html {
+    height: 100%;
+    overflow: hidden;
+    /* Prevents font size adjustment on orientation change (iOS) */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
+
+  body {
+    height: 100%;
+    overflow: hidden;
+    @apply antialiased bg-brand-950 text-gray-900;
+    /* Smooth momentum scroll inside scroll containers */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Prevent double-tap zoom on all interactive elements */
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+
+  /* Remove iOS input shadow */
+  input, select, textarea {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   * {
     @apply box-border;
+    /* Prevent text selection flicker on tap */
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer utilities {
+  /* Respect the iPhone notch / home-bar */
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 12px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Scrollable container that works well on iOS */
+  .scroll-touch {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }

@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef } from 'react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, TrendingDown, ChevronRight, LogOut, RotateCcw, RefreshCw } from 'lucide-react'
+import { TrendingUp, TrendingDown, ChevronRight, LogOut, RotateCcw } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTransactions } from '../hooks/useTransactions'
 import { useCategories } from '../hooks/useCategories'
@@ -10,20 +10,13 @@ import { useAuth } from '../context/AuthContext'
 import { processRecurring } from '../hooks/useRecurring'
 import { useBudgetRollovers, computeAndStoreRollovers } from '../hooks/useBudgetRollover'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../context/CurrencyContext'
 import Layout from '../components/Layout'
-
-function fmt(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n)
-}
-
-function fmtSplit(n) {
-  const [whole, dec] = n.toFixed(2).split('.')
-  return { whole: Number(whole).toLocaleString(), dec }
-}
 
 export default function Dashboard() {
   const { user, signOut } = useAuth()
   const { toast } = useToast()
+  const { fmt } = useCurrency()
   const qc = useQueryClient()
   const processed = useRef(false)
 
@@ -75,7 +68,7 @@ export default function Dashboard() {
     const recentTx = [...transactions].slice(0, 5)
     const totalBudget = categories.filter(c => c.budget_limit).reduce((s, c) => s + c.budget_limit, 0)
 
-    return { income, expenses, balance, byCategory, recentTx, totalBudget, totalSpent: expenses }
+    return { income, expenses, balance: income - expenses, byCategory, recentTx, totalBudget, totalSpent: expenses }
   }, [transactions, categories])
 
   const categoryProgress = useMemo(() => {
@@ -92,7 +85,6 @@ export default function Dashboard() {
   }, [categories, transactions, rollovers])
 
   const firstName = user?.email?.split('@')[0] ?? 'there'
-  const { whole, dec } = fmtSplit(balance)
   const totalRollover = Object.values(rollovers).reduce((s, v) => s + v, 0)
   const effectiveTotalBudget = totalBudget + totalRollover
   const budgetPct = effectiveTotalBudget > 0 ? Math.min((totalSpent / effectiveTotalBudget) * 100, 100) : 0
@@ -115,9 +107,7 @@ export default function Dashboard() {
       <div className="rounded-3xl bg-brand-900 text-white p-6 mb-5">
         <p className="text-brand-300 text-sm mb-1">Total balance</p>
         <div className="flex items-baseline gap-1 mb-4">
-          <span className="text-4xl font-bold">{whole}</span>
-          <span className="text-2xl font-semibold text-brand-300">.{dec}</span>
-          <span className="text-lg text-brand-300 ml-1">USD</span>
+          <span className="text-3xl font-bold">{fmt(balance)}</span>
         </div>
         <div className="flex gap-4">
           <div className="flex items-center gap-2 bg-brand-800/60 rounded-2xl px-4 py-2.5 flex-1">
