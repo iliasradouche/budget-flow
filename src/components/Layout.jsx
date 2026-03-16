@@ -37,7 +37,8 @@ export default function Layout({ children }) {
 
         {/* Page content */}
         <div className="min-h-[calc(100vh-56px)] lg:min-h-screen rounded-t-3xl lg:rounded-none bg-gray-50">
-          <div className="mx-auto max-w-2xl lg:max-w-5xl px-4 lg:px-8 pt-6 pb-28 lg:pb-8 lg:pt-8">
+          <div className="mx-auto max-w-2xl lg:max-w-5xl px-4 lg:px-8 pt-6 lg:pb-8 lg:pt-8"
+              style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
             {children}
           </div>
         </div>
