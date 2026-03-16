@@ -1,12 +1,14 @@
 import { useMemo, useEffect, useRef } from 'react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, TrendingDown, ChevronRight, LogOut, RotateCcw } from 'lucide-react'
+import { TrendingUp, TrendingDown, ChevronRight, RotateCcw } from 'lucide-react'
+
 import { useQueryClient } from '@tanstack/react-query'
 import { useTransactions } from '../hooks/useTransactions'
 import { useCategories } from '../hooks/useCategories'
 import { useGoals } from '../hooks/useGoals'
 import { useAuth } from '../context/AuthContext'
+import { useUserSettings } from '../hooks/useUserSettings'
 import { processRecurring } from '../hooks/useRecurring'
 import { useBudgetRollovers, computeAndStoreRollovers } from '../hooks/useBudgetRollover'
 import { useToast } from '../context/ToastContext'
@@ -14,7 +16,7 @@ import { useCurrency } from '../context/CurrencyContext'
 import Layout from '../components/Layout'
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
   const { fmt } = useCurrency()
   const qc = useQueryClient()
@@ -29,6 +31,7 @@ export default function Dashboard() {
   const { data: categories = [] } = useCategories()
   const { data: goals = [] } = useGoals()
   const { data: rollovers = {} } = useBudgetRollovers(currentMonth)
+  const { data: settings } = useUserSettings()
 
   // ── Auto-process recurring transactions once per session ──────────────────
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function Dashboard() {
     const recentTx = [...transactions].slice(0, 5)
     const totalBudget = categories.filter(c => c.budget_limit).reduce((s, c) => s + c.budget_limit, 0)
 
-    return { income, expenses, balance: income - expenses, byCategory, recentTx, totalBudget, totalSpent: expenses }
+    return { income, expenses, balance, byCategory, recentTx, totalBudget, totalSpent: expenses }
   }, [transactions, categories])
 
   const categoryProgress = useMemo(() => {
@@ -84,7 +87,9 @@ export default function Dashboard() {
       })
   }, [categories, transactions, rollovers])
 
-  const firstName = user?.email?.split('@')[0] ?? 'there'
+  const displayName = settings?.first_name
+    ? `${settings.first_name}${settings.last_name ? ' ' + settings.last_name : ''}`
+    : 'there'
   const totalRollover = Object.values(rollovers).reduce((s, v) => s + v, 0)
   const effectiveTotalBudget = totalBudget + totalRollover
   const budgetPct = effectiveTotalBudget > 0 ? Math.min((totalSpent / effectiveTotalBudget) * 100, 100) : 0
@@ -93,39 +98,34 @@ export default function Dashboard() {
   return (
     <Layout>
       {/* Greeting */}
-      <div className="lg:hidden mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{format(now, 'MMMM yyyy')}</p>
-          <h1 className="text-xl font-bold text-gray-900">Hi, {firstName}!</h1>
-        </div>
-        <button onClick={signOut} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-colors">
-          <LogOut size={18} />
-        </button>
+      <div className="lg:hidden mb-6">
+        <p className="text-sm text-gray-500">{format(now, 'MMMM yyyy')}</p>
+        <h1 className="text-xl font-bold text-gray-900">Hi, {displayName}!</h1>
       </div>
 
       {/* Balance hero */}
       <div className="rounded-3xl bg-brand-900 text-white p-6 mb-5">
         <p className="text-brand-300 text-sm mb-1">Total balance</p>
-        <div className="flex items-baseline gap-1 mb-4">
-          <span className="text-3xl font-bold">{fmt(balance)}</span>
+        <div className="mb-4">
+          <span className="text-2xl sm:text-3xl font-bold break-all leading-tight">{fmt(balance)}</span>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2 bg-brand-800/60 rounded-2xl px-4 py-2.5 flex-1">
-            <div className="p-1.5 bg-green-500/20 rounded-lg">
-              <TrendingUp size={16} className="text-green-400" />
+        <div className="flex gap-3">
+          <div className="flex items-center gap-2 bg-brand-800/60 rounded-2xl px-3 py-2.5 flex-1 min-w-0">
+            <div className="p-1.5 bg-green-500/20 rounded-lg shrink-0">
+              <TrendingUp size={15} className="text-green-400" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-brand-300">Income</p>
-              <p className="text-sm font-semibold">{fmt(income)}</p>
+              <p className="text-xs font-semibold truncate">{fmt(income)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-brand-800/60 rounded-2xl px-4 py-2.5 flex-1">
-            <div className="p-1.5 bg-red-500/20 rounded-lg">
-              <TrendingDown size={16} className="text-red-400" />
+          <div className="flex items-center gap-2 bg-brand-800/60 rounded-2xl px-3 py-2.5 flex-1 min-w-0">
+            <div className="p-1.5 bg-red-500/20 rounded-lg shrink-0">
+              <TrendingDown size={15} className="text-red-400" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-brand-300">Expenses</p>
-              <p className="text-sm font-semibold">{fmt(expenses)}</p>
+              <p className="text-xs font-semibold truncate">{fmt(expenses)}</p>
             </div>
           </div>
         </div>

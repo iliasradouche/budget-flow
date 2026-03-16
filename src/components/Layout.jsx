@@ -3,6 +3,7 @@ import BottomNav from './BottomNav'
 import CurrencyPicker from './CurrencyPicker'
 import { useAuth } from '../context/AuthContext'
 import { LogOut } from 'lucide-react'
+import logo from '../logo.png'
 
 export default function Layout({ children }) {
   const { signOut } = useAuth()
@@ -13,18 +14,24 @@ export default function Layout({ children }) {
 
       <main className="flex-1 overflow-y-auto scroll-touch overscroll-none">
         {/* Mobile top bar */}
-        <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-brand-950 safe-top">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500">
-              <span className="text-xs font-bold text-white">B</span>
+        <div className="lg:hidden sticky top-0 z-30 bg-brand-950 safe-top">
+          <div className="flex items-center justify-between px-5 py-4">
+            {/* Logo */}
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="Beztami" className="h-9 w-9 rounded-xl object-cover" />
+              <span className="brand-text text-lg">Beztami</span>
             </div>
-            <span className="text-base font-bold text-white">BudgetFlow</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CurrencyPicker compact />
-            <button onClick={signOut} className="p-1.5 rounded-lg text-brand-400 hover:text-white transition-colors">
-              <LogOut size={16} />
-            </button>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1.5">
+              <CurrencyPicker compact />
+              <button
+                onClick={signOut}
+                className="flex items-center justify-center h-8 w-8 rounded-xl bg-brand-800 text-brand-300 hover:bg-brand-700 hover:text-white transition-colors"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
           </div>
         </div>
 

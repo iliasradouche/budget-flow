@@ -4,13 +4,11 @@ import { useCurrency, CURRENCIES } from '../context/CurrencyContext'
 import { useTransactions } from '../hooks/useTransactions'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
 export default function CurrencyPicker({ compact = false }) {
   const { currency, changeCurrency, loadingRates } = useCurrency()
   const { data: transactions = [] } = useTransactions({})
-  const { user } = useAuth()
   const { toast } = useToast()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -24,30 +22,15 @@ export default function CurrencyPicker({ compact = false }) {
     try {
       const rate = await changeCurrency(newCode)
 
-      // If we got a real exchange rate and there are transactions, convert them
       if (rate && rate !== 1 && transactions.length > 0) {
-        const confirmed = window.confirm(
-          `Convert all ${transactions.length} existing transaction amounts from ${currency} to ${newCode}?\n\n` +
-          `Rate: 1 ${currency} = ${rate.toFixed(4)} ${newCode}\n\n` +
-          `Click OK to convert, Cancel to keep original amounts.`
-        )
-
-        if (confirmed) {
-          // Bulk update amounts in Supabase
-          const updates = transactions.map(t => ({
-            id: t.id,
-            amount: Math.round(t.amount * rate * 100) / 100,
-          }))
-
-          for (const u of updates) {
-            await supabase.from('transactions').update({ amount: u.amount }).eq('id', u.id)
-          }
-
-          qc.invalidateQueries({ queryKey: ['transactions'] })
-          toast({ message: `Converted ${updates.length} transactions to ${newCode} at ${rate.toFixed(4)} rate.` })
-        } else {
-          toast({ message: `Currency changed to ${newCode}. Amounts kept as-is.` })
+        for (const t of transactions) {
+          await supabase
+            .from('transactions')
+            .update({ amount: Math.round(t.amount * rate * 100) / 100 })
+            .eq('id', t.id)
         }
+        qc.invalidateQueries({ queryKey: ['transactions'] })
+        toast({ message: `Switched to ${newCode} — ${transactions.length} transactions converted.` })
       } else {
         toast({ message: `Currency changed to ${newCode}.` })
       }
@@ -57,20 +40,22 @@ export default function CurrencyPicker({ compact = false }) {
   }
 
   const current = CURRENCIES.find(c => c.code === currency)
+  const busy = converting || loadingRates
 
   return (
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
+        disabled={busy}
         className={`flex items-center gap-1.5 rounded-xl transition-colors font-medium
           ${compact
-            ? 'px-2.5 py-1.5 text-xs bg-brand-800 text-brand-200 hover:bg-brand-700'
-            : 'px-3 py-2 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 w-full justify-between'
+            ? 'h-8 px-2.5 text-xs bg-brand-800 text-brand-200 hover:bg-brand-700 disabled:opacity-60'
+            : 'px-3 py-2 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 w-full justify-between disabled:opacity-60'
           }`}
       >
-        {converting || loadingRates
+        {busy
           ? <Loader2 size={13} className="animate-spin" />
-          : <span>{current?.symbol}</span>
+          : current?.symbol !== current?.code && <span>{current?.symbol}</span>
         }
         <span>{currency}</span>
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -80,8 +65,8 @@ export default function CurrencyPicker({ compact = false }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className={`absolute z-50 mt-1 w-52 rounded-2xl bg-white shadow-xl ring-1 ring-gray-100 overflow-hidden
-            ${compact ? 'bottom-full mb-2 left-0' : 'top-full left-0'}`}>
-            <div className="max-h-64 overflow-y-auto py-1">
+            ${compact ? 'top-full right-0' : 'bottom-full left-0 mb-1'}`}>
+            <div className="py-1">
               {CURRENCIES.map(c => (
                 <button
                   key={c.code}

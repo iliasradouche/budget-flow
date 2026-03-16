@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Tag, Target, LogOut } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Tag, Target, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import CurrencyPicker from './CurrencyPicker'
+import logo from '../logo.png'
 
 const links = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { to: '/categories', icon: Tag, label: 'Categories' },
   { to: '/goals', icon: Target, label: 'Goals' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export default function Sidebar() {
@@ -16,11 +18,9 @@ export default function Sidebar() {
   return (
     <aside className="hidden lg:flex h-screen w-60 flex-col bg-brand-950 px-4 py-6 shrink-0">
       {/* Logo */}
-      <div className="mb-8 flex items-center gap-2 px-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-500">
-          <span className="text-sm font-bold text-white">B</span>
-        </div>
-        <span className="text-lg font-bold text-white">BudgetFlow</span>
+      <div className="mb-8 flex items-center gap-2.5 px-2">
+        <img src={logo} alt="Beztami" className="h-10 w-10 rounded-xl object-cover" />
+        <span className="brand-text text-xl">Beztami</span>
       </div>
 
       {/* Nav */}

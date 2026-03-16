@@ -46,6 +46,7 @@ function GoalForm({ defaultValues, onSubmit, loading }) {
 }
 
 function ContributeForm({ goal, onSubmit, loading }) {
+  const { fmt } = useCurrency()
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(contributionSchema),
     defaultValues: { amount: '' },
@@ -72,6 +73,7 @@ function ContributeForm({ goal, onSubmit, loading }) {
 }
 
 function GoalCard({ g, onContribute, onEdit, onDelete }) {
+  const { fmt } = useCurrency()
   const pct = Math.min((g.current_amount / g.target_amount) * 100, 100)
   const daysLeft = g.deadline ? Math.ceil((new Date(g.deadline) - new Date()) / 86400000) : null
 
