@@ -155,8 +155,14 @@ function RecurringForm({ onSubmit, loading }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Transactions() {
-  const [tab, setTab] = useState('all') // 'all' | 'recurring'
-  const [filters, setFilters] = useState({})
+  const now = new Date()
+  const currentMonth = format(now, 'yyyy-MM')
+  const currentFrom = format(now, 'yyyy-MM-01')
+  const currentTo = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd')
+
+  const [tab, setTab] = useState('all')
+  const [month, setMonth] = useState(currentMonth)
+  const [filters, setFilters] = useState({ from: currentFrom, to: currentTo })
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
@@ -258,8 +264,10 @@ export default function Transactions() {
                 <option value="expense">Expense</option>
               </select>
               <input type="month"
+                value={month}
                 className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 onChange={e => {
+                  setMonth(e.target.value)
                   if (!e.target.value) { setFilters(f => { const n = { ...f }; delete n.from; delete n.to; return n }); return }
                   const [y, m] = e.target.value.split('-')
                   const last = new Date(y, m, 0).getDate()

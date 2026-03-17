@@ -12,8 +12,7 @@ export default function Modal({ open, onClose, title, children }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -39,7 +38,8 @@ export default function Modal({ open, onClose, title, children }) {
         </div>
 
         {/* Scrollable body */}
-        <div className="px-6 py-5 overflow-y-auto scroll-touch">
+        <div className="px-6 py-5 overflow-y-auto scroll-touch"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }}>
           {children}
         </div>
       </div>
